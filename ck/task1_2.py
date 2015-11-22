@@ -1,10 +1,9 @@
-
 import numpy as np
 import scipy as sp
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 
-def FitNormalDistribution(X, filename=None):
+def FitNormalDistribution(X, filename=None):    #function for task2
     
     #Set up the plot
     fig = plt.figure()
@@ -45,7 +44,7 @@ def FitNormalDistribution(X, filename=None):
     plt.close()
 
 
-def plotData2D(X, filename=None):
+def plotData2D(X, filename=None):   #function for task 1
     # create a figure and its axes
     fig = plt.figure()
     axs = fig.add_subplot(111)
