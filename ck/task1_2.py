@@ -101,6 +101,12 @@ if __name__ == "__main__":
     print data
 
     X = data[:,0:2].astype(np.float)
+
+    #A new way to delete -1
+    arr_toDelete = np.where(X<0)
+    X = np.delete(X,arr_toDelete,0)
+
+    '''
     ListToDelete = []
     # read gender data into 1D array (i.e. into a vector)
     for i in range(len(X)):
@@ -109,7 +115,9 @@ if __name__ == "__main__":
                 ListToDelete.append(i)
               
     X = np.delete(X,ListToDelete,0)
-        
+    '''
+    #print X
+    #print "\\\\"
 
     y = data[:,2]
     print y
