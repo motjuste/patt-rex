@@ -5,7 +5,7 @@ Basic plotting using matplotlib
 import matplotlib.pyplot as plt
 
 
-def plot2d(X, axs=None, show=True, set_aspect_equal=True, x_lim=None, y_lim=None, show_axes_through_origin=False, plotlabel=None, title=None):
+def plot2d(X, colwise_data, axs=None, show=True, set_aspect_equal=False, x_lim=None, y_lim=None, show_axes_through_origin=False, plotlabel=None, title=None, hatch='o'):
 
     # FIXME: @motjuste: proper asserts, and testing, please
 
@@ -15,14 +15,22 @@ def plot2d(X, axs=None, show=True, set_aspect_equal=True, x_lim=None, y_lim=None
         axs = fig.add_subplot(111)
 
     # meat and potato of plotting
-    axs.plot(X[0,:], X[1, :], 'o', label=plotlabel)
+    if colwise_data:
+        x = X[0, :]
+        y = X[1, :]
+    else:
+        x = X[:, 0]
+        y = X[:, 1]
+
+    axs.plot(x, y, hatch, label=plotlabel)
 
     # Garnishing starts here
     if title is not None:
         axs.set_title(title)
 
-    leg = axs.legend()
-    leg.get_frame().set_alpha(0.5)
+    if plotlabel is not None:
+        leg = axs.legend()
+        leg.get_frame().set_alpha(0.5)
 
     if set_aspect_equal:
         axs.set_aspect('equal')
