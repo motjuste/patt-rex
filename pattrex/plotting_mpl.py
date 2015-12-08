@@ -5,7 +5,9 @@ Basic plotting using matplotlib
 import matplotlib.pyplot as plt
 
 
-def plot2d(X, colwise_data, axs=None, show=True, set_aspect_equal=False, x_lim=None, y_lim=None, show_axes_through_origin=False, plotlabel=None, title=None, hatch='o'):
+def plot2d(X, colwise_data, axs=None, show=True, set_aspect_equal=False,
+           x_lim=None, y_lim=None, show_axes_through_origin=False,
+           plotlabel=None, title=None, hatch='o'):
 
     # FIXME: @motjuste: proper asserts, and testing, please
 
