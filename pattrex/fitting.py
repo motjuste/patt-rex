@@ -3,6 +3,8 @@
 @kangcifong
 """
 import numpy as np
+import numpy.polynomial.polynomial as pol
+import numpy.linalg as la
 from scipy.stats import norm, exponweib
 
 
@@ -93,3 +95,33 @@ def weib_pdf(data, k, a):
 def fit_weibull_distribution_sp(data, init_a=1, init_c=1, scale=1, loc=0):
     vals = exponweib.fit(data, init_a, init_c, scale=scale, loc=loc)
     return vals, data, exponweib.pdf(data, *vals)
+
+
+# # POLYNOMIAL FITTING ##########################
+# noinspection PyPep8Naming,PyPep8Naming,PyPep8Naming
+def fit_polynomial_nplstsq(X, Y, degree, x_pad=10):
+    """
+    Fits a polynomial of degree with variables X over Y
+
+    :param X: variables. n dimensional array, with row-wise instance
+    :param Y: value to fit to. n dimensional array, with row wise instances
+    :param degree: degree of polynomial. list, dim(X) = len(degree)
+    :param x_pad: padding around X for generated data for the model
+    :return: W, coefficients.
+    :return: x, x values of the generated data for the model.
+    :return: y, y values of the generated data for the model.
+    """
+    # TODO: test for truly n-dimensional X
+    # construct the appropriate Vandermonde matrix
+    V = pol.polyvander(X, degree)
+
+    # get coefficients by least squares
+    coeff = la.lstsq(V, Y)[0]  # discarding other information
+
+    # construct some fitting data
+    x = np.linspace(X.min() - x_pad, X.max() + x_pad, 100)
+    x_ = pol.polyvander(x, degree)
+
+    y = np.dot(x_, coeff)
+
+    return coeff, x, y
