@@ -99,7 +99,7 @@ def fit_weibull_distribution_sp(data, init_a=1, init_c=1, scale=1, loc=0):
 
 # # POLYNOMIAL FITTING ##########################
 # noinspection PyPep8Naming,PyPep8Naming,PyPep8Naming
-def fit_polynomial_nplstsq(X, Y, degree, x_pad=10):
+def fit_polynomial_nplstsq(X, Y, degree, x_pad=10, X_unknown=None):
     """
     Fits a polynomial of degree with variables X over Y
 
@@ -107,11 +107,11 @@ def fit_polynomial_nplstsq(X, Y, degree, x_pad=10):
     :param Y: value to fit to. n dimensional array, with row wise instances
     :param degree: degree of polynomial. list, dim(X) = len(degree)
     :param x_pad: padding around X for generated data for the model
+    :param X_unknown: unknown X for which y is to be predicted, if not None.
     :return: W, coefficients.
-    :return: x, x values of the generated data for the model.
-    :return: y, y values of the generated data for the model.
+    :return: (x, y): (x, y) values of the generated data for the model.
     """
-    # TODO: test for truly n-dimensional X
+    # TODO: tests for truly n-dimensional X
     # construct the appropriate Vandermonde matrix
     V = pol.polyvander(X, degree)
 
@@ -124,4 +124,11 @@ def fit_polynomial_nplstsq(X, Y, degree, x_pad=10):
 
     y = np.dot(x_, coeff)
 
-    return coeff, x, y
+    # calculate y for unknown X, if provided
+    if X_unknown is not None:
+        V_unknown = pol.polyvander(X_unknown)
+        y_pred = np.dot(V_unknown, coeff)
+
+        return coeff, y_pred, (x, y)
+    else:
+        return coeff, (x, y)
