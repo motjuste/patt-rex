@@ -1,7 +1,7 @@
-'''
+"""
 @motjuste
 @kangcifong
-'''
+"""
 import numpy as np
 from scipy.stats import norm, exponweib
 
@@ -12,12 +12,14 @@ def fit_normal_distribution(data, x_pad=10):
 
     x = np.linspace(data.min()-x_pad, data.max()+x_pad, 100)
     y = norm.pdf(x, data_mean, data_std)
-    return (data_mean, data_std, x, y)
+    return data_mean, data_std, x, y
 
 
+# noinspection PyPep8Naming,PyPep8Naming,PyPep8Naming
 def fit_weibull_distribution(data, init_k=None, init_a=None, n_iter=30,
                              change_thresh=1e-3, return_err=False):
 
+    # noinspection PyPep8Naming,PyShadowingNames
     def delta_1(ka, d, N):
         k = ka[0]
         a = ka[1]
@@ -30,6 +32,7 @@ def fit_weibull_distribution(data, init_k=None, init_a=None, n_iter=30,
 
         return np.array([1*del_k, 1*del_a])
 
+    # noinspection PyPep8Naming,PyShadowingNames,PyShadowingNames
     def delta_2(ka, d, N):
         k = ka[0]
         a = ka[1]
@@ -89,4 +92,4 @@ def weib_pdf(data, k, a):
 
 def fit_weibull_distribution_sp(data, init_a=1, init_c=1, scale=1, loc=0):
     vals = exponweib.fit(data, init_a, init_c, scale=scale, loc=loc)
-    return (vals, data, exponweib.pdf(data, *vals))
+    return vals, data, exponweib.pdf(data, *vals)
