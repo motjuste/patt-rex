@@ -6,6 +6,7 @@ import numpy as np
 import numpy.polynomial.polynomial as pol
 import numpy.linalg as la
 from scipy.stats import norm, exponweib, multivariate_normal
+from sklearn.linear_model import BayesianRidge
 
 
 def fit_normal_distribution(data, x_pad=10):
@@ -159,6 +160,8 @@ def fit_weibull_distribution_sp(data, init_a=1, init_c=1, scale=1, loc=0):
 
 
 # # POLYNOMIAL FITTING ##########################
+
+# ## ORDINARY LEAST SQUARES #####################
 # noinspection PyPep8Naming,PyPep8Naming,PyPep8Naming
 def fit_polynomial_nplstsq(X, Y, degree, x_pad=10, X_unknown=None):
     """
@@ -193,3 +196,146 @@ def fit_polynomial_nplstsq(X, Y, degree, x_pad=10, X_unknown=None):
         return coeff, y_pred, (x, y)
     else:
         return coeff, (x, y)
+
+
+# ## BAYESIAN PARAMETER ESTIMATION ##############
+
+# sklearn approach
+def fit_polynomial_bayesian_skl(X, Y, degree,
+                                lambda_shape=1.e-6, lambda_invscale=1.e-6,
+                                padding=10, n=100,
+                                X_unknown=None):
+    X_v = pol.polyvander(X, degree)
+
+    clf = BayesianRidge(lambda_1=lambda_shape, lambda_2=lambda_invscale)
+    clf.fit(X_v, Y)
+
+    coeff = clf.coef_
+
+    # there some weird intercept thing
+    # since the Vandermonde matrix has 1 at the beginning, just add this
+    # intercept to the first coeff
+    coeff[0] += clf.intercept_
+
+    ret_ = [(coeff)]
+
+    # generate the line
+    x = np.linspace(X.min()-padding, X.max()+padding, n)
+    x_v = pol.polyvander(x, degree)
+
+    # using the provided predict method
+    y_1 = clf.predict(x_v)
+
+    # using np.dot() with coeff
+    y_2 = np.dot(x_v, coeff)
+
+    ret_.append(((x, y_1), (x, y_2)))
+
+    if X_unknown is not None:
+        xu_v = pol.polyvander(X_unknown, degree)
+
+        # using the predict method
+        yu_1 = clf.predict(xu_v)
+
+        # using np.dot() with coeff
+        yu_2 = np.dot(xu_v, coeff)
+
+        ret_.append(((X_unknown, yu_1), (X_unknown, yu_2)))
+
+    return ret_
+
+
+# manual approach
+def fit_polynomial_bayesian(x, y, degree,
+                            sig2=None, mu_0=0, sig2_0=3.0,
+                            use_pinv=False, use_lsmr=False,
+                            padding=10, n=100, get_pdf=True,
+                            X_unknown=None):
+    X = pol.polyvander(x, degree)
+
+    if sig2 is None:
+        sig2 = np.var(y)
+
+    Xt = X.T
+
+    prec = (1/sig2) * (np.dot(Xt, X)) + (1/sig2_0) * np.identity(degree + 1)
+
+    # different approaches to inverse calculation
+    # TODO: @motjuste: which one is correct
+    prec_inv = la.pinv(prec) if use_pinv else la.inv(prec)
+
+    mu = (1/sig2) * np.dot(prec_inv, np.dot(Xt, y))
+
+    # FIXME: @mostjuste: choose the one righteous approach
+    if use_lsmr:
+        from scipy.sparse.linalg import lsmr
+
+        coeff = lsmr(X, y, damp=(sig2/sig2_0))[0]
+    else:
+        if use_pinv:
+            coeff = la.pinv(np.dot(Xt, X) + (sig2/sig2_0) * np.identity(
+                    degree + 1))
+        else:
+            coeff = la.inv(np.dot(Xt, X) + (sig2/sig2_0) * np.identity(
+                    degree + 1))
+
+        coeff = np.dot(coeff, np.dot(Xt, y))
+
+    ret_ = [coeff]
+
+    # generate the line
+    x = np.linspace(x.min()-padding, x.max()+padding, n)
+    x_v = pol.polyvander(x, degree)
+
+    # the mean of the posterior of y is the best prediction
+    y_1 = np.dot(x_v, mu)
+
+    # using np.dot() with coeff
+    y_2 = np.dot(x_v, coeff)
+
+    ret_.append(((x, y_1), (x, y_2)))
+
+    if X_unknown is not None:
+        xu_v = pol.polyvander(X_unknown, degree)
+
+        # the mean of the posterior of y is the best prediction
+        yu_1 = np.dot(xu_v, mu)
+
+        # using np.dot() with coeff
+        yu_2 = np.dot(xu_v, coeff)
+
+        ret_.append(((X_unknown, yu_1), (X_unknown, yu_2)))
+
+    if get_pdf:
+        # http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.multivariate_normal.html
+        data_min = np.array([x.min(), y.min()])
+        data_max = np.array([x.max(), y.max()])
+        xy_steps = (data_max - data_min) / (n + 2 * padding)
+        # noinspection PyPep8
+        xx, yy = np.mgrid[data_min[0] - padding: data_max[0] + padding:
+        xy_steps[0],
+               data_min[1] - padding: data_max[1] + padding:
+               xy_steps[1]]
+
+        x = xx[:, 0]
+        y = yy[0, :]
+        pdf = []
+
+        for i, x_ in enumerate(x):
+            x_v = pol.polyvander(x_, degree).T
+
+            mean = np.dot(mu.T, x_v)
+            var = sig2 + np.dot(x_v.T, np.dot(prec_inv, x_v))
+            pdf_ = norm.pdf(y, mean, var).T
+            pdf.append(pdf_)
+
+        pdf = np.array(pdf)[:, :, 0]
+
+        # use `plt.contourf(x, y, pdf)`
+        ret_.append((xx, yy, pdf))
+
+    return ret_
+
+
+
+
