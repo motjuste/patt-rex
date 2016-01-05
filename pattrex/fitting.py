@@ -18,48 +18,59 @@ def fit_normal_distribution(data, x_pad=10):
     return data_mean, data_std, x, y
 
 
-# noinspection PyPep8Naming
+# noinspection PyPep8Naming,PyUnresolvedReferences,PyUnresolvedReferences
 def fit_multivariate_normal_dist(data, colwise=True, ddof=None,
                                  get_pdf=True, padding=10, n=100,
-                                 X_unknown=None, X_unkown_dim=None):
+                                 X_unknown=None, X_unknown_dim=None):
     if not colwise:
         data = np.transpose(data)
     # find mean and covariance of the data
     data_mean = np.mean(data, axis=1)
     data_cov = np.cov(data, ddof=ddof)
 
+    data_cov_sqrt = np.sqrt(data_cov)
+    data_std = np.array([data_cov_sqrt[i, i] for i in range(data.shape[0])])
+
+    # 2D limited code starts here
+    assert data.shape[0] == 2, "prediction for unknowns supported only " \
+                               "for 2D data"
+    data_corr = np.corrcoef(data)[0, 1]
     ret_ = [(data_mean, data_cov)]
+
+    # FIXME: @motjuste: asserts for 2D
+    data_min = data.min(axis=1)
+    data_max = data.max(axis=1)
+
+    x = np.linspace(data_min[0] - padding, data_max[0] + padding, n)
+    # noinspection PyUnresolvedReferences
+    y_pred = data_mean[1] + (data_corr *
+                             (data_std[1]/data_std[0]) *
+                             (x - data_mean[0]))
+
+    ret_.append((x, y_pred))
+
     if X_unknown is not None:
-        assert X_unkown_dim is not None, "please provide the dim of the " \
+        assert X_unknown_dim is not None, "please provide the dim of the " \
                                      "variable for which the values are " \
                                      "provided"
-        assert X_unkown_dim < data.shape[0], "Dimension mismatch; X_unknown " \
+        assert X_unknown_dim < data.shape[0], "Dimension mismatch; X_unknown " \
                                               "dim > dimension of the data. " \
                                               "Remember, indexing starts at 0"
-        assert X_unkown_dim >= 0, "Invalid X_unknown_dim"
+        assert X_unknown_dim >= 0, "Invalid X_unknown_dim"
 
-        data_cov_sqrt = np.sqrt(data_cov)
-        data_std = np.array([data_cov_sqrt[i, i] for i in range(data.shape[0])])
-
-        # 2D limited code starts here
-        assert data.shape[0] == 2, "prediction for unknowns supported only " \
-                                   "for 2D data"
-        data_corr = np.corrcoef(data)[0, 1]
-        pred_dim = 1 - X_unkown_dim
+        pred_dim = 1 - X_unknown_dim
         Y_pred = data_mean[pred_dim] + data_corr * (data_std[
                                                         pred_dim] / data_std[
-                                                        X_unkown_dim]) * (
-                                           X_unknown - data_mean[X_unkown_dim])
+                                                        X_unknown_dim]) * (
+                                           X_unknown - data_mean[X_unknown_dim])
 
-        ret_.append((Y_pred))
+        ret_.append((X_unknown, Y_pred))
 
     # generate pdf
     if get_pdf:
         assert data.shape[0] == 2, "generating pdf supported only for 2D data"
 
         # http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.multivariate_normal.html
-        data_min = data.min(axis=1)
-        data_max = data.max(axis=1)
         xy_steps = (data_max - data_min) / (n + 2 * padding)
         # noinspection PyPep8
         x, y = np.mgrid[data_min[0] - padding: data_max[0] + padding:
@@ -193,7 +204,7 @@ def fit_polynomial_nplstsq(X, Y, degree, x_pad=10, X_unknown=None):
         V_unknown = pol.polyvander(X_unknown, degree)
         y_pred = np.dot(V_unknown, coeff)
 
-        return coeff, y_pred, (x, y)
+        return coeff, (x, y), (X_unknown, y_pred)
     else:
         return coeff, (x, y)
 
@@ -201,6 +212,7 @@ def fit_polynomial_nplstsq(X, Y, degree, x_pad=10, X_unknown=None):
 # ## BAYESIAN PARAMETER ESTIMATION ##############
 
 # sklearn approach
+# noinspection PyPep8Naming,PyPep8Naming,PyPep8Naming,PyPep8Naming
 def fit_polynomial_bayesian_skl(X, Y, degree,
                                 lambda_shape=1.e-6, lambda_invscale=1.e-6,
                                 padding=10, n=100,
@@ -217,7 +229,7 @@ def fit_polynomial_bayesian_skl(X, Y, degree,
     # intercept to the first coeff
     coeff[0] += clf.intercept_
 
-    ret_ = [(coeff)]
+    ret_ = [coeff]
 
     # generate the line
     x = np.linspace(X.min()-padding, X.max()+padding, n)
@@ -246,8 +258,9 @@ def fit_polynomial_bayesian_skl(X, Y, degree,
 
 
 # manual approach
+# noinspection PyPep8Naming,PyUnresolvedReferences
 def fit_polynomial_bayesian(x, y, degree,
-                            sig2=None, mu_0=0, sig2_0=3.0,
+                            sig2=None, sig2_0=3.0,
                             use_pinv=False, use_lsmr=False,
                             padding=10, n=100, get_pdf=True,
                             X_unknown=None):
@@ -266,7 +279,7 @@ def fit_polynomial_bayesian(x, y, degree,
 
     mu = (1/sig2) * np.dot(prec_inv, np.dot(Xt, y))
 
-    # FIXME: @mostjuste: choose the one righteous approach
+    # FIXME: @motjuste: choose the one righteous approach
     if use_lsmr:
         from scipy.sparse.linalg import lsmr
 
