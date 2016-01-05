@@ -269,7 +269,8 @@ def fit_polynomial_bayesian(x, y, degree,
     # FIXME: @mostjuste: choose the one righteous approach
     if use_lsmr:
         from scipy.sparse.linalg import lsmr
-        coeff = lsmr(X, y, damp=(sig2/sig2_0))
+
+        coeff = lsmr(X, y, damp=(sig2/sig2_0))[0]
     else:
         if use_pinv:
             coeff = la.pinv(np.dot(Xt, X) + (sig2/sig2_0) * np.identity(
@@ -283,7 +284,7 @@ def fit_polynomial_bayesian(x, y, degree,
     ret_ = [coeff]
 
     # generate the line
-    x = np.linspace(X.min()-padding, X.max()+padding, n)
+    x = np.linspace(x.min()-padding, x.max()+padding, n)
     x_v = pol.polyvander(x, degree)
 
     # the mean of the posterior of y is the best prediction
@@ -321,12 +322,12 @@ def fit_polynomial_bayesian(x, y, degree,
         pdf = []
 
         for i, x_ in enumerate(x):
-            x_v = pol.polyvander(x_, degree)
+            x_v = pol.polyvander(x_, degree).T
 
-            mean = np.dot(x_v, mu)
-            var = sig2 + np.dot(x_v.T, np.dot(x_v, prec_inv))
-
-            pdf.append(norm.pdf(y, mean, var))
+            mean = np.dot(mu.T, x_v)
+            var = sig2 + np.dot(x_v.T, np.dot(prec_inv, x_v))
+            pdf_ = norm.pdf(y, mean, var).T
+            pdf.append(pdf_)
 
         pdf = np.array(pdf)[:, :, 0]
 
