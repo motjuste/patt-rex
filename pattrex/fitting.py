@@ -35,7 +35,7 @@ def fit_multivariate_normal_dist(data, colwise=True, ddof=None,
     assert data.shape[0] == 2, "prediction for unknowns supported only " \
                                "for 2D data"
     data_corr = np.corrcoef(data)[0, 1]
-    ret_ = [(data_mean, data_cov)]
+    ret_ = [(data_mean, data_cov, data_corr)]
 
     # FIXME: @motjuste: asserts for 2D
     data_min = data.min(axis=1)
