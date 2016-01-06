@@ -35,7 +35,7 @@ def fit_multivariate_normal_dist(data, colwise=True, ddof=None,
     assert data.shape[0] == 2, "prediction for unknowns supported only " \
                                "for 2D data"
     data_corr = np.corrcoef(data)[0, 1]
-    ret_ = [(data_mean, data_cov)]
+    ret_ = [(data_mean, data_cov, data_corr)]
 
     # FIXME: @motjuste: asserts for 2D
     data_min = data.min(axis=1)
@@ -222,7 +222,7 @@ def fit_polynomial_bayesian_skl(X, Y, degree,
     clf = BayesianRidge(lambda_1=lambda_shape, lambda_2=lambda_invscale)
     clf.fit(X_v, Y)
 
-    coeff = clf.coef_
+    coeff = np.copy(clf.coef_)
 
     # there some weird intercept thing
     # since the Vandermonde matrix has 1 at the beginning, just add this
