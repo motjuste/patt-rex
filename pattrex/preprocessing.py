@@ -1,10 +1,10 @@
-'''
+"""
 @motjuste
-'''
+"""
 import numpy as np
 
 
-def only_all_positive(data, colwise_data):
+def only_all_positive(data, colwise_data, return_neg_idx=False):
     # find indices for negative measurements
     neg_idx = np.where(data < 0)
 
@@ -14,7 +14,13 @@ def only_all_positive(data, colwise_data):
     neg_idx_unique = neg_idx[d]
 
     # delete row/column and return
-    return np.delete(data, neg_idx_unique, d)
+    new_data = np.delete(data, neg_idx_unique, d)
+
+    if return_neg_idx:
+        return new_data, neg_idx_unique
+    else:
+        return new_data
+
 
 def split_data(data, colwise_data, field_idx, field_values):
     splits = []
