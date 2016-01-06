@@ -15,11 +15,10 @@ def KDTree(X, depth, dim, splt, bound=None):
 
     n, k = X.shape
     print("The number of points is:", n, "The dimension is:", k)
-    if(n==0):
-        print("n:",n,"###Stopped by n, depth is ", depth)
+    if(n==0):#Recursive stop condition
         return None
     
-    if(depth==10):#safety valve, remove if everything is checked.
+    if(depth>=15):#safety valve, remove if everything is checked.
         print(depth,"!!!Stopped by depth valve. n is ",n)
         return None
     
@@ -46,34 +45,43 @@ def KDTree(X, depth, dim, splt, bound=None):
     elif(splt==1):#Midpoint, middle of the bounding box
         if (bound==None):#bound==None
             bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
-        i=np.average(np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0),axis=0)
+        i = np.average(bound,axis=0)
+        #i=np.average(np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0),axis=0)
     elif(splt==2):#sliding-Midpoint #OPTIONAL
         i=-1
     else:
         print("splt should be either 1:Midpoint or 2:Median")
-    psu_lb=np.copy(bound)
-    psu_rb=np.copy(bound)
-    psu_lb[0,slcDim]=i[slcDim]
-    psu_rb[1,slcDim]=i[slcDim]
-    print("psu_lb, After sub",psu_lb)
-    print("psu_rb, After sub",psu_rb)
+        
+    if(n>1):#Split the array    
+        psu_lb=np.copy(bound)
+        psu_rb=np.copy(bound)
+        psu_lb[0,slcDim]=i[slcDim]
+        psu_rb[1,slcDim]=i[slcDim]
+        print("psu_lb, After sub",psu_lb)
+        print("psu_rb, After sub",psu_rb)
 
-    #Split the array
-    print(i[slcDim])
-    if(n%2==0):
-        M = X[:,slcDim] <= i[slcDim]
-        left, right = X[M], X[~M]
-    elif(n%2==1):
-        L = X[:,slcDim] < i[slcDim]
-        R = X[:,slcDim] > i[slcDim]
-        left, right = X[L], X[R]
-    
-    return Node(i, 
-                KDTree(left, depth+1, dim, splt, psu_lb), 
-                KDTree(right, depth+1, dim, splt, psu_rb),
-                slcDim,
-                bound
-                )
+        print(i[slcDim])
+        if(n%2==0):
+            M = X[:,slcDim] <= i[slcDim]
+            left, right = X[M], X[~M]
+        elif(n%2==1):
+            L = X[:,slcDim] < i[slcDim]
+            R = X[:,slcDim] > i[slcDim]
+            left, right = X[L], X[R]
+
+        return Node(i, 
+                    KDTree(left, depth+1, dim, splt, psu_lb), 
+                    KDTree(right, depth+1, dim, splt, psu_rb),
+                    slcDim,
+                    bound
+                    )
+    else:
+        return Node(i, 
+            None,
+            None,
+            slcDim,
+            bound
+            )
 
 def KDTreePlotBranch2D(Node, axs):
 
@@ -134,10 +142,10 @@ def PlotBaseAndScatter(x,y,axsList):
                    title="Alternative and Median")
     plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
                    y_lim=ylim, show=False, axs=axsList[1], set_aspect_equal=False, 
-                   title="High Variance and Median")
+                   title="Alternative and MidPoint")
     plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
                    y_lim=ylim, show=False, axs=axsList[2], set_aspect_equal=False, 
-                   title="Alternative and MidPoint")
+                   title="High Variance and Median")
     plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
                    y_lim=ylim, show=False, axs=axsList[3], set_aspect_equal=False, 
                    title="High Variance and MidPoint")
