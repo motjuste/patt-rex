@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 def plot2d(X, colwise_data, axs=None, show=True, set_aspect_equal=False,
            x_lim=None, y_lim=None, show_axes_through_origin=False,
-           plotlabel=None, title=None, hatch='o'):
+           plotlabel=None, title=None, hatch='o', color=None):
 
     # FIXME: @motjuste: proper asserts, and testing, please
 
@@ -24,7 +24,10 @@ def plot2d(X, colwise_data, axs=None, show=True, set_aspect_equal=False,
         x = X[:, 0]
         y = X[:, 1]
 
-    axs.plot(x, y, hatch, label=plotlabel)
+    if color is None:
+        axs.plot(x, y, hatch, label=plotlabel)
+    else:
+        axs.plot(x, y, hatch, label=plotlabel, color=color)
 
     # Garnishing starts here
     if title is not None:

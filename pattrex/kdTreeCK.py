@@ -36,8 +36,8 @@ def KDTree(X, depth, dim, splt, bound=None):
         j = np.median(X[:,slcDim])
         #if (bound==None):#bound==None
         if bound is None:
-            bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
-        i = np.average(np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0),axis=0)
+            bound = np.vstack((np.amax(X,axis=0),np.amin(X,axis=0)))
+        i = np.average(np.vstack((np.amax(X,axis=0),np.amin(X,axis=0))), axis=0)
         i[slcDim]=j
         #Design Choice: Since we calculate the median by only one axis
         #if the number of data is even, we would get the result as the sum of the very middle two points 
@@ -46,12 +46,12 @@ def KDTree(X, depth, dim, splt, bound=None):
     elif(splt==1):#Midpoint, middle of the bounding box
         #if (bound==None):#bound==None
         if bound is None:
-            bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
+            bound = np.vstack((np.amax(X,axis=0),np.amin(X,axis=0)))
         i = np.average(bound,axis=0)
         #i=np.average(np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0),axis=0)
     elif(splt==2):#sliding-Midpoint
         if bound is None:#bound==None
-            bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
+            bound = np.vstack((np.amax(X,axis=0),np.amin(X,axis=0)))
         i=np.average(bound,axis=0) #First mid point
         
         less_idx = np.nonzero(X[:,slcDim] <= i[slcDim])[0]
