@@ -222,7 +222,7 @@ def fit_polynomial_bayesian_skl(X, Y, degree,
     clf = BayesianRidge(lambda_1=lambda_shape, lambda_2=lambda_invscale)
     clf.fit(X_v, Y)
 
-    coeff = clf.coef_
+    coeff = np.copy(clf.coef_)
 
     # there some weird intercept thing
     # since the Vandermonde matrix has 1 at the beginning, just add this
