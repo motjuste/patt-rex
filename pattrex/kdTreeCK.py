@@ -11,15 +11,15 @@ class Node:
         self.bound = bound #NOTE: The bounding box here is not determined by the max and min of this part of data, it is deciede by the whole data
                
 def KDTree(X, depth, dim, splt, bound=None):
-    print("Depth:",depth)
+    #print("Depth:",depth)
 
     n, k = X.shape
-    print("The number of points is:", n, "The dimension is:", k)
+    #print("The number of points is:", n, "The dimension is:", k)
     if(n==0):#Recursive stop condition
         return None
     
     if(depth>=15):#safety valve, remove if everything is checked.
-        print(depth,"!!!Stopped by depth valve. n is ",n)
+        #print(depth,"!!!Stopped by depth valve. n is ",n)
         return None
     
     #Dimension selection
@@ -29,12 +29,13 @@ def KDTree(X, depth, dim, splt, bound=None):
         slcDim = np.argmax( np.var(X[:,:], axis=0) )        
     else:
         print("dim should be either 1:Alternate or 2:Highest variance")
-    print("SliceDimension: ",slcDim)
+    #print("SliceDimension: ",slcDim)
     
     #Split point selection
     if(splt==0):#Median
         j = np.median(X[:,slcDim])
-        if (bound==None):#bound==None
+        #if (bound==None):#bound==None
+        if bound is None:
             bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
         i = np.average(np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0),axis=0)
         i[slcDim]=j
@@ -43,12 +44,27 @@ def KDTree(X, depth, dim, splt, bound=None):
         #on the desinated axis, but simply interpolate the unused axis is meaningless, I then store nothing but the 
         #desinated axis. But in order to get a clean result, we use the middle point method on those axises.      
     elif(splt==1):#Midpoint, middle of the bounding box
-        if (bound==None):#bound==None
+        #if (bound==None):#bound==None
+        if bound is None:
             bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
         i = np.average(bound,axis=0)
         #i=np.average(np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0),axis=0)
-    elif(splt==2):#sliding-Midpoint #OPTIONAL
-        i=-1
+    elif(splt==2):#sliding-Midpoint
+        if bound is None:#bound==None
+            bound = np.stack((np.amax(X,axis=0),np.amin(X,axis=0)),axis=0)
+        i=np.average(bound,axis=0) #First mid point
+        
+        less_idx = np.nonzero(X[:,slcDim] <= i[slcDim])[0]
+        greater_idx = np.nonzero(X[:,slcDim] > i[slcDim])[0]
+
+        if len(less_idx) == 0:
+            i = np.amin(X,axis=0)
+            less_idx = np.nonzero(X[:,slcDim] <= i[slcDim])[0]
+            greater_idx = np.nonzero(X[:,slcDim] > i[slcDim])[0]
+        if len(greater_idx) == 0:
+            i = np.amax(X,axis=0)
+            less_idx = np.nonzero(X[:,slcDim] < i[slcDim])[0]
+            greater_idx = np.nonzero(X[:,slcDim] >= i[slcDim])[0]
     else:
         print("splt should be either 1:Midpoint or 2:Median")
         
@@ -57,10 +73,10 @@ def KDTree(X, depth, dim, splt, bound=None):
         psu_rb=np.copy(bound)
         psu_lb[0,slcDim]=i[slcDim]
         psu_rb[1,slcDim]=i[slcDim]
-        print("psu_lb, After sub",psu_lb)
-        print("psu_rb, After sub",psu_rb)
+        #print("psu_lb, After sub",psu_lb)
+        #print("psu_rb, After sub",psu_rb)
 
-        print(i[slcDim])
+        #print(i[slcDim])
         if(n%2==0):
             M = X[:,slcDim] <= i[slcDim]
             left, right = X[M], X[~M]
@@ -89,14 +105,14 @@ def KDTreePlotBranch2D(Node, axs):
         return
     
     if(axs==None):
-        fig = plt.figure(figsize=(12, 12))
+        fig = plt.figure(figsize=(12, 8))
         axs = fig.add_subplot(221)
         
     axisMax = np.amax(Node.bound[:,~Node.sliceDimension])
     axisMin = np.amin(Node.bound[:,~Node.sliceDimension])
     midPoint = Node.split[Node.sliceDimension]
-    print(Node.bound)
-    print("max", axisMax,"min", axisMin, "mid",midPoint )
+    #print(Node.bound)
+    #print("max", axisMax,"min", axisMin, "mid",midPoint )
     # plt.plot([axisMin, axisMax], [midPoint, midPoint], color='b', linestyle='-', linewidth=1)
 
     if Node.sliceDimension==0:
@@ -145,21 +161,28 @@ def PlotBaseAndScatter(x,y,axsList):
                    title="Alternative and MidPoint")
     plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
                    y_lim=ylim, show=False, axs=axsList[2], set_aspect_equal=False, 
-                   title="High Variance and Median")
+                   title="Alternative and SlidingMidPoint")
     plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
                    y_lim=ylim, show=False, axs=axsList[3], set_aspect_equal=False, 
+                   title="High Variance and Median")
+    plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
+                   y_lim=ylim, show=False, axs=axsList[4], set_aspect_equal=False, 
                    title="High Variance and MidPoint")
+    plt_rex.plot2d(X, colwise_data=True, hatch='ro', x_lim=xlim, 
+                   y_lim=ylim, show=False, axs=axsList[5], set_aspect_equal=False, 
+                   title="High Variance and SlidingMidPoint")
+ 
     return
 
-def KDTreePlot2D(x, y, TreeList):
+def KDTreePlot2D(x, y, TreeList, dim, splt):
 # def KDTreePlot2D(Node1,Node2,Node3,Node4):
     
     #Four variants of KDTree
-    fig = plt.figure(figsize=(12, 12))
+    fig = plt.figure(figsize=(12, 8))
     axsList=[]
     
     for i in range(TreeList.__len__()):
-        axsList.append(fig.add_subplot(TreeList.__len__()/2 + TreeList.__len__()%2, 2 ,i+1))
+        axsList.append(fig.add_subplot(dim, splt ,i+1))
 
     PlotBaseAndScatter(x,y, axsList)
     
