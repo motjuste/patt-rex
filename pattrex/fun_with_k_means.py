@@ -69,6 +69,59 @@ def save_plotted_cluster(data, idx, centroids, title, file_prefix, iteration, k)
 
 # importan! comment out save_ploted_cluster calls for performance test
 
+def kmeans_Lloyd(data, k, centroids):
+    
+    ## Important!! the input parameter is different to others, this requires a initial centroid
+    
+    # Set t=0 and initialize centroids
+    iteration = 0
+    maxIteration = 200
+    prefix = 'Lloyd'
+    title = "Lloyd's algorithm, update: {}"
+
+    colors = np.zeros((len(data), 3))
+    idx = np.zeros(len(data))
+    # initial plot
+    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
+
+    # repeat until convergence
+    converged = False
+    while not converged:
+
+        idxPrev = np.copy(idx)
+        #update all clusters
+        for i in range(len(data)):
+            candidate_class = 0
+            candidate_distance = np.inf
+            for j in range(k):
+                distance = np.linalg.norm(centroids[j] - data[i, :])
+                if distance < candidate_distance:
+                    candidate_class = j
+                    candidate_distance = distance
+            idx[i] = candidate_class
+
+        show_plotted_cluster(data, idx, centroids, "Lloyd's algorithm",k)
+        # update all cluster centroid
+        centroidsPrev = centroids
+        centroids = compute_centroids(data, idx, k)
+
+        # increase iteration counter
+        iteration=iteration+1
+        # save the current progress
+        save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
+
+        if(iteration>=maxIteration):
+            converged = True
+            convCondition = 1
+        if(np.array_equal(idxPrev,idx)):
+            converged = True
+            convCondition = 2
+        if(np.allclose(centroids,centroidsPrev)):
+            converged = True
+            convCondition = 3
+
+    return centroids, idx, convCondition
+
 def kmeans_hartigans(data, k):
     # plotting purpose
     iteration = 0
