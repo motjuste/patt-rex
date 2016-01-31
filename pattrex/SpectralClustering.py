@@ -84,3 +84,4 @@ def plot(data,ur,index,u_idx_pos,u_idx_neg):
                   show=False, axs=axs2, set_aspect_equal=False, plotlabel="Neg")
     plt_rex.plot2d(data[:,u_idx_pos[0]], colwise_data=True, hatch='ro', 
                   show=False, axs=axs2, set_aspect_equal=False, plotlabel="Pos")
+    

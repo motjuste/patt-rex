@@ -22,12 +22,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 
-DATA_PATH = "../data/data-clustering-1.csv"
+#DATA_PATH = "../data/data-clustering-1.csv"
 
-data = np.genfromtxt(DATA_PATH, delimiter=",")
-data = np.transpose(data)
+#data = np.genfromtxt(DATA_PATH, delimiter=",")
+#data = np.transpose(data)
 
-k = 3
+#k = 3
 
 
 def compute_centroids(data, idx, k):
@@ -174,4 +174,4 @@ def main():
     return
 
 
-main()
+#main()
