@@ -81,7 +81,7 @@ def kmeans_hartigans(data, k):
     centroids = compute_centroids(data, idx, k)
 
     # initial plot
-    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration)
+    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
     while True:
         converged = True
         for i in range(len(data)):
@@ -104,7 +104,7 @@ def kmeans_hartigans(data, k):
                 centroids = compute_centroids(data, idx, k)
                 idx[i] = candidate_class
                 iteration += 1
-                save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration)
+                save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
 
             idx[i] = candidate_class
 
@@ -139,7 +139,7 @@ def kmeans_macqueen(data, k):
         centroids[candidate_class] += 1 / n[candidate_class] * (data[i, :] - centroids[candidate_class])
 
         iteration += 1
-        save_plotted_cluster(data[0:i + 1], colors[0:i + 1], centroids, title.format(iteration), prefix, iteration)
+        save_plotted_cluster(data[0:i + 1], colors[0:i + 1], centroids, title.format(iteration), prefix, iteration,k)
 
     for i in range(len(data)):
         candidate_class = 0
@@ -152,7 +152,7 @@ def kmeans_macqueen(data, k):
         idx[i] = candidate_class
 
     iteration += 1
-    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration)
+    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration,k)
 
     return centroids, idx
 
@@ -161,15 +161,15 @@ def main():
     # Lloyd's algorithm
     centroids, _ = kmeans(data, k)
     idx, _ = vq(data, centroids)
-    show_plotted_cluster(data, idx, centroids, "Lloyd's algorithm")
+    show_plotted_cluster(data, idx, centroids, "Lloyd's algorithm",k)
 
     # Hartigan's algorithm
     centroids, idx = kmeans_hartigans(data, k)
-    show_plotted_cluster(data, idx, centroids, "Hartigan's algorithm")
+    show_plotted_cluster(data, idx, centroids, "Hartigan's algorithm",k)
 
     # MacQueen's algorithm
     centroids, idx = kmeans_macqueen(data, k)
-    show_plotted_cluster(data, idx, centroids, "MacQueen's algorithm")
+    show_plotted_cluster(data, idx, centroids, "MacQueen's algorithm",k)
 
     return
 
