@@ -45,7 +45,7 @@ def compute_objective(data, idx, k, centroids):
     return total_error
 
 
-def show_plotted_cluster(data, idx, centroids, title):
+def show_plotted_cluster(data, idx, centroids, title, k):
     plt.cla()
     plt.xlim(-4, 4)
     plt.ylim(-4, 4)
@@ -56,7 +56,7 @@ def show_plotted_cluster(data, idx, centroids, title):
     return
 
 
-def save_plotted_cluster(data, idx, centroids, title, file_prefix, iteration):
+def save_plotted_cluster(data, idx, centroids, title, file_prefix, iteration, k):
     plt.cla()
     plt.xlim(-4, 4)
     plt.ylim(-4, 4)
