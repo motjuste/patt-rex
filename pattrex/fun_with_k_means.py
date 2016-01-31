@@ -1,6 +1,6 @@
 """
 @aksakalli
-
+@Cifong Kang
 Here is a draft implementation of k-means algorithms.
 You need "img" folder under the same path in order to export plot images.
 
@@ -100,7 +100,6 @@ def kmeans_Lloyd(data, k, centroids):
                     candidate_distance = distance
             idx[i] = candidate_class
 
-        show_plotted_cluster(data, idx, centroids, "Lloyd's algorithm",k)
         # update all cluster centroid
         centroidsPrev = centroids
         centroids = compute_centroids(data, idx, k)
