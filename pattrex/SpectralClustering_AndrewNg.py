@@ -24,8 +24,9 @@ def LaplacianMatrix(D, A):
 def plot(dataProcessed, idx, centroids, k, dataOri):
     
     fig = plt.figure(figsize=(12, 6))
-
     plt.subplot(121)
+    plt.xlim(-1.2, 1.2)
+    plt.ylim(-1.2, 1.2)
     plt.scatter(dataProcessed[:, 0], dataProcessed[:, 1], marker='o', c=idx, alpha=0.5)
     plt.scatter(centroids[:, 0], centroids[:, 1], marker='s', c=range(k))
     
