@@ -1,6 +1,6 @@
 """
 @aksakalli
-
+@Cifong Kang
 Here is a draft implementation of k-means algorithms.
 You need "img" folder under the same path in order to export plot images.
 
@@ -22,12 +22,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 
-DATA_PATH = "../data/data-clustering-1.csv"
+#DATA_PATH = "../data/data-clustering-1.csv"
 
-data = np.genfromtxt(DATA_PATH, delimiter=",")
-data = np.transpose(data)
+#data = np.genfromtxt(DATA_PATH, delimiter=",")
+#data = np.transpose(data)
 
-k = 3
+#k = 3
 
 
 def compute_centroids(data, idx, k):
@@ -45,7 +45,7 @@ def compute_objective(data, idx, k, centroids):
     return total_error
 
 
-def show_plotted_cluster(data, idx, centroids, title):
+def show_plotted_cluster(data, idx, centroids, title, k):
     plt.cla()
     plt.xlim(-4, 4)
     plt.ylim(-4, 4)
@@ -56,7 +56,7 @@ def show_plotted_cluster(data, idx, centroids, title):
     return
 
 
-def save_plotted_cluster(data, idx, centroids, title, file_prefix, iteration):
+def save_plotted_cluster(data, idx, centroids, title, file_prefix, iteration, k):
     plt.cla()
     plt.xlim(-4, 4)
     plt.ylim(-4, 4)
@@ -68,6 +68,58 @@ def save_plotted_cluster(data, idx, centroids, title, file_prefix, iteration):
 
 
 # importan! comment out save_ploted_cluster calls for performance test
+
+def kmeans_Lloyd(data, k, centroids):
+    
+    ## Important!! the input parameter is different to others, this requires a initial centroid
+    
+    # Set t=0 and initialize centroids
+    iteration = 0
+    maxIteration = 200
+    prefix = 'Lloyd'
+    title = "Lloyd's algorithm, update: {}"
+
+    colors = np.zeros((len(data), 3))
+    idx = np.zeros(len(data))
+    # initial plot
+    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
+
+    # repeat until convergence
+    converged = False
+    while not converged:
+
+        idxPrev = np.copy(idx)
+        #update all clusters
+        for i in range(len(data)):
+            candidate_class = 0
+            candidate_distance = np.inf
+            for j in range(k):
+                distance = np.linalg.norm(centroids[j] - data[i, :])
+                if distance < candidate_distance:
+                    candidate_class = j
+                    candidate_distance = distance
+            idx[i] = candidate_class
+
+        # update all cluster centroid
+        centroidsPrev = centroids
+        centroids = compute_centroids(data, idx, k)
+
+        # increase iteration counter
+        iteration=iteration+1
+        # save the current progress
+        save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
+
+        if(iteration>=maxIteration):
+            converged = True
+            convCondition = 1
+        if(np.array_equal(idxPrev,idx)):
+            converged = True
+            convCondition = 2
+        if(np.allclose(centroids,centroidsPrev)):
+            converged = True
+            convCondition = 3
+
+    return centroids, idx, convCondition
 
 def kmeans_hartigans(data, k):
     # plotting purpose
@@ -81,7 +133,7 @@ def kmeans_hartigans(data, k):
     centroids = compute_centroids(data, idx, k)
 
     # initial plot
-    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration)
+    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
     while True:
         converged = True
         for i in range(len(data)):
@@ -104,7 +156,7 @@ def kmeans_hartigans(data, k):
                 centroids = compute_centroids(data, idx, k)
                 idx[i] = candidate_class
                 iteration += 1
-                save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration)
+                save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration, k)
 
             idx[i] = candidate_class
 
@@ -139,7 +191,7 @@ def kmeans_macqueen(data, k):
         centroids[candidate_class] += 1 / n[candidate_class] * (data[i, :] - centroids[candidate_class])
 
         iteration += 1
-        save_plotted_cluster(data[0:i + 1], colors[0:i + 1], centroids, title.format(iteration), prefix, iteration)
+        save_plotted_cluster(data[0:i + 1], colors[0:i + 1], centroids, title.format(iteration), prefix, iteration,k)
 
     for i in range(len(data)):
         candidate_class = 0
@@ -152,7 +204,7 @@ def kmeans_macqueen(data, k):
         idx[i] = candidate_class
 
     iteration += 1
-    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration)
+    save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration,k)
 
     return centroids, idx
 
@@ -161,17 +213,17 @@ def main():
     # Lloyd's algorithm
     centroids, _ = kmeans(data, k)
     idx, _ = vq(data, centroids)
-    show_plotted_cluster(data, idx, centroids, "Lloyd's algorithm")
+    show_plotted_cluster(data, idx, centroids, "Lloyd's algorithm",k)
 
     # Hartigan's algorithm
     centroids, idx = kmeans_hartigans(data, k)
-    show_plotted_cluster(data, idx, centroids, "Hartigan's algorithm")
+    show_plotted_cluster(data, idx, centroids, "Hartigan's algorithm",k)
 
     # MacQueen's algorithm
     centroids, idx = kmeans_macqueen(data, k)
-    show_plotted_cluster(data, idx, centroids, "MacQueen's algorithm")
+    show_plotted_cluster(data, idx, centroids, "MacQueen's algorithm",k)
 
     return
 
 
-main()
+#main()
