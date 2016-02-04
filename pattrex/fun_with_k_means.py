@@ -22,6 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 from scipy.spatial import distance as spdist
+from numpy.linalg import norm
 
 #DATA_PATH = "../data/data-clustering-1.csv"
 
@@ -234,7 +235,7 @@ def hartigan2(X, k, seed=9000):
     for kk in range(k):
         Xkk = X[y == kk]
         m[kk] = np.mean(Xkk, axis=0)
-        e[kk] = np.sum(sqnorm(Xkk - m[kk]))
+        e[kk] = np.sum(norm(Xkk - m[kk]))
         n[kk] = len(Xkk)
 
     converged = False
@@ -250,27 +251,25 @@ def hartigan2(X, k, seed=9000):
 
             m[ki] = (n[ki] / (n[ki] - 1)) * (m[ki] - x / n[ki])
 
-            normxki = sqnorm(x - m[ki])
-            eki = e[ki]
-            e[ki] = np.sum(sqnorm(Xki - m[ki])) - normxki
-            ediffki = e[ki] - eki
+            normxkk = norm(x - m, axis=1)
+            eki = np.sum(norm(Xki - m[ki])) - normxkk[ki]
+            ediffki = eki - e[ki]
 
-            ediff = []
-            for kk in range(k):
-                if kk == ki:
-                    ediff.append(ediffki + normxki)
-                else:
-                    ediff.append(ediffki + sqnorm(x - m[kk]))
+            ediff = ediffki + normxkk
 
             kw = np.argmin(ediff)
 
-            converged = ki == kw
-
-            y[i] = kw
-            Xkw = np.copy(X[y == kw])
-            n[kw] = len(Xkw)
-            m[kw] += (1/n[kw]) * (x - m[kw])
-            e[kw] = np.sum(sqnorm(Xkw - m[kw]))
+            if ki == kw:
+                converged = True
+                y[i] = ki
+            else:
+                converged = False
+                e[ki] = eki
+                y[i] = kw
+                Xkw = np.copy(X[y == kw])
+                n[kw] = len(Xkw)
+                m[kw] += (1/n[kw]) * (x - m[kw])
+                e[kw] = np.sum(norm(Xkw - m[kw]))
 
     if not converged:
         raise UserWarning("Did not Converge after {} iterations".format(t))
