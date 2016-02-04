@@ -21,6 +21,7 @@ Hartigans's algorithm - http://imgur.com/RhRQ53u
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
+from scipy.spatial import distance as spdist
 
 #DATA_PATH = "../data/data-clustering-1.csv"
 
@@ -28,6 +29,7 @@ from scipy.cluster.vq import kmeans, vq
 #data = np.transpose(data)
 
 #k = 3
+np.random.seed(9000)
 
 
 def compute_centroids(data, idx, k):
@@ -79,7 +81,6 @@ def kmeans_Lloyd(data, k, centroids, save_plot=True):
     prefix = 'Lloyd'
     title = "Lloyd's algorithm, update: {}"
 
-    colors = np.zeros((len(data), 3))
     idx = np.zeros(len(data))
     # initial plot
     if save_plot:
@@ -127,7 +128,7 @@ def kmeans_Lloyd(data, k, centroids, save_plot=True):
 
     return centroids, idx, convCondition
 
-def kmeans_hartigans(data, k, save_plot=True):
+def kmeans_hartigans(data, k, save_plot=True, show_plot=True):
     # plotting purpose
     iteration = 0
     prefix = 'hartigan'
@@ -216,6 +217,122 @@ def kmeans_macqueen(data, k, save_plot=True):
         save_plotted_cluster(data, idx, centroids, title.format(iteration), prefix, iteration,k)
 
     return centroids, idx
+
+
+def sqnorm(x):
+    return np.power(np.linalg.norm(x), 2)
+
+
+def hartigan2(X, k, seed=9000):
+    nX, mX = X.shape
+    np.random.seed(seed)
+    y = np.random.randint(k, size=nX)
+
+    m = np.zeros((k, mX))
+    e = np.ones(k)
+    n = np.zeros(k)
+    for kk in range(k):
+        Xkk = X[y == kk]
+        m[kk] = np.mean(Xkk, axis=0)
+        e[kk] = np.sum(sqnorm(Xkk - m[kk]))
+        n[kk] = len(Xkk)
+
+    converged = False
+    t, t_max = 0, 1000
+    while not converged and t < t_max:
+        t += 1
+        converged = True
+        for i, x in enumerate(X):
+            ki = y[i]
+            y[i] = -1
+            Xki = np.copy(X[y == ki])
+            n[ki] = len(Xki)
+
+            m[ki] = (n[ki] / (n[ki] - 1)) * (m[ki] - x / n[ki])
+
+            normxki = sqnorm(x - m[ki])
+            eki = e[ki]
+            e[ki] = np.sum(sqnorm(Xki - m[ki])) - normxki
+            ediffki = e[ki] - eki
+
+            ediff = []
+            for kk in range(k):
+                if kk == ki:
+                    ediff.append(ediffki + normxki)
+                else:
+                    ediff.append(ediffki + sqnorm(x - m[kk]))
+
+            kw = np.argmin(ediff)
+
+            converged = ki == kw
+
+            y[i] = kw
+            Xkw = np.copy(X[y == kw])
+            n[kw] = len(Xkw)
+            m[kw] += (1/n[kw]) * (x - m[kw])
+            e[kw] = np.sum(sqnorm(Xkw - m[kw]))
+
+    if not converged:
+        raise UserWarning("Did not Converge after {} iterations".format(t))
+
+    return m, y
+
+
+def lloyd2(data, init_cent, metric='e', verbose=False):
+    k = init_cent.shape[0]
+    cent = np.copy(init_cent)
+    labels = spdist.cdist(data, cent, metric).argmin(axis=1)
+    converged = False
+    t, tmax = 0, 1000
+
+    while not converged and t < tmax:
+        t += 1
+        converged = True
+
+        cent_ = np.array([np.mean(data[labels == l], axis=0)
+                         for l in range(k)])
+
+        labels_ = spdist.cdist(data, cent_, metric).argmin(axis=1)
+
+        if not np.allclose(cent_, cent) or \
+                not np.alltrue(labels == labels_):
+            converged = False
+            labels = labels_
+            cent = cent_
+
+    if not converged:
+        # raise UserWarning("did not converge after {} iterations".format(t))
+        print("did not converge after {} iterations".format(t))
+    elif verbose:
+        print("Converged after {} iterations".format(t))
+
+    return cent, labels
+
+
+def mcqueen2(data, k, metric='e', passes=1):
+    nX, mX = data.shape
+
+    cent = data[:k, :]
+    nk = np.ones(k)
+
+    for i in range(passes):
+        if i == 0:
+            dd = data[k:, :]
+        else:
+            dd = data
+
+        for i, x in enumerate(dd):
+            x = x.reshape(1, mX)
+            l = spdist.cdist(x, cent, metric=metric).argmin()
+
+            nk[l] += 1
+            cent[l] = cent[l] + (1/nk[l]) * (x - cent[l])
+
+    labels = spdist.cdist(data, cent).argmin(axis=1)
+
+    return cent, labels
+
+
 
 
 def main():
