@@ -42,7 +42,11 @@ def SpectralClustering(data, k, sigma):
 
     X = ur[:,index[index.shape[0]-k:index.shape[0]]]
     D = np.sqrt((np.sum((np.square(X)),axis=1)))
-    D = np.vstack((D,D)).T
+    if(k==2):
+        D = np.vstack((D,D)).T
+    if(k==3):
+        D = np.vstack((D,D,D)).T
+
     Y = np.divide(X,D)
     centroids, distortion = kmeans(Y, k)
     idx, _ = vq(Y, centroids)
