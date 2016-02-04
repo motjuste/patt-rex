@@ -309,18 +309,24 @@ def lloyd2(data, init_cent, metric='e', verbose=False):
     return cent, labels
 
 
-def mcqueen2(data, k, metric='e'):
+def mcqueen2(data, k, metric='e', passes=1):
     nX, mX = data.shape
 
     cent = data[:k, :]
     nk = np.ones(k)
 
-    for i, x in enumerate(data[k:, :]):
-        x = x.reshape(1, mX)
-        l = spdist.cdist(x, cent, metric=metric).argmin()
+    for i in range(passes):
+        if i == 0:
+            dd = data[k:, :]
+        else:
+            dd = data
 
-        nk[l] += 1
-        cent[l] = cent[l] + (1/nk[l]) * (x - cent[l])
+        for i, x in enumerate(dd):
+            x = x.reshape(1, mX)
+            l = spdist.cdist(x, cent, metric=metric).argmin()
+
+            nk[l] += 1
+            cent[l] = cent[l] + (1/nk[l]) * (x - cent[l])
 
     labels = spdist.cdist(data, cent).argmin(axis=1)
 
